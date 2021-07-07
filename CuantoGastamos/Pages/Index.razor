@@ -1,0 +1,211 @@
+﻿@page "/"
+@page "/CuantoGastamos"
+@using Clases
+
+<div class="modal-dialog">
+    <div class="modal-content">
+        <EditForm Model="@participante" OnValidSubmit="Agregar">
+            <ValidationSummary />
+            <table class="table">
+                <tr>
+                    <td>Nombre</td>
+                    <td><input type="text" class="inputV" maxlength="10" required @bind="participante.Nombre" /></td>
+                </tr>
+
+                <tr>
+                    <td>Monto</td>
+                    <td><input type="number" class="inputV" maxlength="10" required @bind="participante.Monto" /></td>
+                </tr>
+            </table>
+            <div style="text-align:center" class="boton">
+                <button type="submit" class="btn btn-primary">Agregar</button>
+                <button type="button" class="btn btn-danger" @onclick="Borrar">Cancelar</button>
+            </div>
+        </EditForm>
+        <div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Monto</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (Participante item in participantes)
+                    {
+                        <tr>
+                            <td>@item.Nombre</td>
+                            <td>$@item.Monto</td>
+                            <td><button type="button" class="btn btn-danger" @onclick="@(() => Borrar(item))">Borrar</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div style="text-align:center">
+                <button type="button" class="btn btn-success" @onclick="@(() => Calcular())">Calcular</button>
+            </div>
+            <br />
+        </div>
+        <div>
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td>Se gasto un total de: $@Math.Round(total, 2)</td> 
+                    </tr>
+                    <tr>
+                        <td>Cada participante pone: $@Math.Round((total / participantes.Count), 2)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <table class="table">
+                <tbody>
+                    @foreach (string item in informe)
+                    {
+                        <tr>
+                            <td>@item</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    public Participante participante { get; set; } = new Participante();
+    public List<Participante> participantes { get; set; } = new List<Participante>();
+    List<string> informe = new List<string>();
+    double total = 0;
+
+    protected void Agregar()
+    {
+        participantes.Add(participante);
+        total += participante.Monto;
+        participante = new Participante();
+    }
+
+    protected void Borrar()
+    {
+        participante = new Participante();
+    }
+
+    protected void Borrar(Participante p)
+    {
+        total -= p.Monto;
+        participantes.Remove(p);
+    }
+
+    protected void Calcular()
+    {
+        int cantParticipantes = participantes.Count(), paganC = 0, noPaganC = 0, recibenC = 0;
+        double montoPagar = total / cantParticipantes;
+        //Calculo cada tipo de participante y para saber el tamanio de su arreglo
+        foreach (Participante item in participantes)
+        {
+            if (item.Monto < montoPagar)
+            {
+                paganC++;
+            }
+            else
+            {
+                if (item.Monto > montoPagar)
+                {
+                    recibenC++;
+                }
+                else
+                {
+                    noPaganC++;
+                }
+            }
+
+        }
+
+        Participante[] pagan = new Participante[paganC];
+        Participante[] noPagan = new Participante[noPaganC];
+        Participante[] reciben = new Participante[recibenC];
+        Participante aux;
+
+        //Agrego cada participante a su correspodiente arreglo
+        int w = 0, y = 0, z = 0;
+        foreach (Participante item in participantes)
+        {
+            if (item.Monto < montoPagar)
+            {
+                aux = new Participante(item.Nombre, item.Monto);
+                pagan[w] = aux;
+                w++;
+            }
+            else
+            {
+                if (item.Monto > montoPagar)
+                {
+                    aux = new Participante(item.Nombre, item.Monto);
+                    reciben[y] = aux;
+                    y++;
+                }
+                else
+                {
+                    aux = new Participante(item.Nombre, item.Monto);
+                    noPagan[z] = aux;
+                    z++;
+                }
+            }
+        }
+        calcularPagos(pagan, reciben, noPagan, montoPagar);
+    }
+
+    protected void calcularPagos(Participante[] pagan, Participante[] reciben, Participante[] noPagan, double paga)
+    {
+        int i = 0, j = 0;
+        Participante p, r;
+        while (i < pagan.Length) //Si quedan personas por pagar
+        {
+            if (j < reciben.Length)  //Si quedan personas por recibir
+            {
+                p = pagan[i];
+                double pagoP = p.Monto;  //Pago
+                double falta = paga - pagoP;  //Le falta
+
+                r = reciben[j];
+                double pagoR = r.Monto;  //Pago
+                double recibe = pagoR - paga;  //Lo que debe recibir
+
+                if (falta <= recibe) //Si lo que le falta pagar es menor a lo que tiene que recibir
+                {
+                    p.Monto += falta;  //Pago el restante y subo el monto total pagado.
+                    r.Monto -= falta; //El otro recibe mi pago
+
+                    pagan[i] = p;
+                    reciben[j] = r;
+
+                    informe.Add(p.Nombre.ToString() + " le paga $" + Math.Round(falta, 2) + " a " + r.Nombre.ToString());
+                }
+                else //Si lo que tiene que pagar es mayor a lo que tiene que recibir
+                {
+                    p.Monto += recibe;  //Pago el restante y subo el monto total pagado.
+                    r.Monto -= recibe; //El otro recibe mi pago
+
+                    pagan[i] = p;
+                    reciben[j] = r;
+
+                    informe.Add(p.Nombre.ToString() + " le paga $" + Math.Round(recibe, 2) + " a " + r.Nombre.ToString());
+                }
+
+                if (p.Monto == paga) //Si el monto pagado es igual al que se debe pagar lo saco del arreglo
+                {
+                    i++;
+                }
+
+                if (r.Monto == paga) //Si el monto recibido es igual al que se debe pagar lo saco del arreglo
+                {
+                    j++;
+                }
+            }
+        }
+
+    }
+}
