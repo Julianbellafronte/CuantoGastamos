@@ -2,6 +2,9 @@
 @page "/CuantoGastamos"
 @using Clases
 
+<div style="float: right">
+    <a href="https://www.instagram.com/julianbellafronte/?hl=es-la" target="_blank"><img class="foto" src="/instagram.png" /></a>
+</div>
 <div class="modal-dialog">
     <div class="modal-content">
         <EditForm Model="@participante" OnValidSubmit="Agregar">
@@ -14,7 +17,7 @@
 
                 <tr>
                     <td>Monto</td>
-                    <td><input type="number" class="inputV" maxlength="10" required @bind="participante.Monto" /></td>
+                    <td><input type="number" step="0.1" class="inputV" min="0.1" maxlength="10" required @bind="participante.Monto" /></td>
                 </tr>
             </table>
             <div style="text-align:center" class="boton">
@@ -54,7 +57,7 @@
                         <td>Se gasto un total de: $@Math.Round(total, 2)</td> 
                     </tr>
                     <tr>
-                        <td>Cada participante pone: $@Math.Round((total / participantes.Count), 2)</td>
+                        <td>Cada participante pone: $@MontoParticipante()</td>
                     </tr>
                 </tbody>
             </table>
@@ -76,86 +79,103 @@
 
 
 @code {
-    public Participante participante { get; set; } = new Participante();
-    public List<Participante> participantes { get; set; } = new List<Participante>();
-    List<string> informe = new List<string>();
-    double total = 0;
+        public Participante participante { get; set; } = new Participante();
+        public List<Participante> participantes { get; set; } = new List<Participante>();
+        List<string> informe = new List<string>();
+        double total = 0;
 
-    protected void Agregar()
-    {
-        participantes.Add(participante);
-        total += participante.Monto;
-        participante = new Participante();
-    }
-
-    protected void Borrar()
-    {
-        participante = new Participante();
-    }
-
-    protected void Borrar(Participante p)
-    {
-        total -= p.Monto;
-        participantes.Remove(p);
-    }
-
-    protected void Calcular()
-    {
-        int cantParticipantes = participantes.Count(), paganC = 0, noPaganC = 0, recibenC = 0;
-        double montoPagar = total / cantParticipantes;
-        //Calculo cada tipo de participante y para saber el tamanio de su arreglo
-        foreach (Participante item in participantes)
+        protected void Agregar()
         {
-            if (item.Monto < montoPagar)
+            participantes.Add(participante);
+            total += participante.Monto;
+            participante = new Participante();
+        }
+
+        protected void Borrar()
+        {
+            participante = new Participante();
+        }
+
+        protected void Borrar(Participante p)
+        {
+            total -= p.Monto;
+            participantes.Remove(p);
+            informe = new List<string>();
+        }
+
+        protected double MontoParticipante()
+        {
+            int cant = participantes.Count;
+            if (cant > 0)
             {
-                paganC++;
+                double monto = total / cant;
+                return (Math.Round(monto, 2));
             }
             else
             {
-                if (item.Monto > montoPagar)
-                {
-                    recibenC++;
-                }
-                else
-                {
-                    noPaganC++;
-                }
+                return 0;
             }
-
         }
 
-        Participante[] pagan = new Participante[paganC];
-        Participante[] noPagan = new Participante[noPaganC];
-        Participante[] reciben = new Participante[recibenC];
-        Participante aux;
-
-        //Agrego cada participante a su correspodiente arreglo
-        int w = 0, y = 0, z = 0;
-        foreach (Participante item in participantes)
+        protected void Calcular()
         {
-            if (item.Monto < montoPagar)
+            if (participantes.Count > 0) { 
+            int cantParticipantes = participantes.Count(), paganC = 0, noPaganC = 0, recibenC = 0;
+            double montoPagar = total / cantParticipantes;
+            //Calculo cada tipo de participante y para saber el tamanio de su arreglo
+            foreach (Participante item in participantes)
             {
-                aux = new Participante(item.Nombre, item.Monto);
-                pagan[w] = aux;
-                w++;
-            }
-            else
-            {
-                if (item.Monto > montoPagar)
+                if (item.Monto < montoPagar)
                 {
-                    aux = new Participante(item.Nombre, item.Monto);
-                    reciben[y] = aux;
-                    y++;
+                    paganC++;
                 }
                 else
                 {
+                    if (item.Monto > montoPagar)
+                    {
+                        recibenC++;
+                    }
+                    else
+                    {
+                        noPaganC++;
+                    }
+                }
+
+            }
+
+            Participante[] pagan = new Participante[paganC];
+            Participante[] noPagan = new Participante[noPaganC];
+            Participante[] reciben = new Participante[recibenC];
+            Participante aux;
+
+            //Agrego cada participante a su correspodiente arreglo
+            int w = 0, y = 0, z = 0;
+            foreach (Participante item in participantes)
+            {
+                if (item.Monto < montoPagar)
+                {
                     aux = new Participante(item.Nombre, item.Monto);
-                    noPagan[z] = aux;
-                    z++;
+                    pagan[w] = aux;
+                    w++;
+                }
+                else
+                {
+                    if (item.Monto > montoPagar)
+                    {
+                        aux = new Participante(item.Nombre, item.Monto);
+                        reciben[y] = aux;
+                        y++;
+                    }
+                    else
+                    {
+                        aux = new Participante(item.Nombre, item.Monto);
+                        noPagan[z] = aux;
+                        z++;
+                    }
                 }
             }
+            calcularPagos(pagan, reciben, noPagan, montoPagar);
         }
-        calcularPagos(pagan, reciben, noPagan, montoPagar);
     }
 
     protected void calcularPagos(Participante[] pagan, Participante[] reciben, Participante[] noPagan, double paga)
