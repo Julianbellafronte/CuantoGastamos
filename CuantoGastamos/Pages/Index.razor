@@ -2,31 +2,36 @@
 @page "/CuantoGastamos"
 @using Clases
 
-<div style="float: right">
-    <a href="https://www.instagram.com/julianbellafronte/?hl=es-la" target="_blank"><img class="foto" src="/instagram.png" /></a>
-</div>
-<div class="modal-dialog">
-    <div class="modal-content">
-        <EditForm Model="@participante" OnValidSubmit="Agregar">
-            <ValidationSummary />
-            <table class="table">
-                <tr>
-                    <td>Nombre</td>
-                    <td><input type="text" class="inputV" maxlength="10" required @bind="participante.Nombre" /></td>
-                </tr>
-
-                <tr>
-                    <td>Monto</td>
-                    <td><input type="number" step="0.1" class="inputV" min="0.1" maxlength="10" required @bind="participante.Monto" /></td>
-                </tr>
-            </table>
-            <div style="text-align:center" class="boton">
-                <button type="submit" class="btn btn-primary">Agregar</button>
-                <button type="button" class="btn btn-danger" @onclick="Borrar">Cancelar</button>
-            </div>
-        </EditForm>
-        <div>
-            <table class="table">
+<div class="recuadro-general">
+    <div class="margin-off">
+        <div class="modal-content; recuadro-input" style="margin-bottom: 2.5%" > 
+            <EditForm Model="@participante" OnValidSubmit="Agregar">
+                <ValidationSummary />
+                <table class="table">
+                    <tr>
+                        <div class="input-group input-group-sm mb-3">
+                            <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-sm">Nombre</span>
+                            </div>
+                            <input type="text" class="form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm" maxlength="10" required @bind="participante.Nombre">
+                        </div>
+                    </tr>
+                    <tr>
+                        <div class="input-group input-group-sm mb-3">
+                            <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-sm">$</span>
+                            </div>
+                            <input type="text" class="form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm" min="0.0" maxlength="10" required @bind="participante.Monto">
+                        </div>
+                    </tr>
+                </table>
+                <div style="text-align:center" class="boton">
+                    <button type="submit" class="btn boton-agregar">Agregar</button>
+                </div>
+            </EditForm>
+        </div>
+        <div class="modal-content; recuadro-usuarios">
+            <table class="table" id="customers">
                 <thead>
                     <tr>
                         <th>Nombre</th>
@@ -40,42 +45,68 @@
                         <tr>
                             <td>@item.Nombre</td>
                             <td>$@item.Monto</td>
-                            <td><button type="button" class="btn btn-danger" @onclick="@(() => Borrar(item))">Borrar</button></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            <div style="text-align:center">
-                <button type="button" class="btn btn-success" @onclick="@(() => Calcular())">Calcular</button>
-            </div>
-            <br />
-        </div>
-        <div>
-            <table class="table">
-                <tbody>
-                    <tr>
-                        <td>Se gasto un total de: $@Math.Round(total, 2)</td> 
-                    </tr>
-                    <tr>
-                        <td>Cada participante pone: $@MontoParticipante()</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div>
-            <table class="table">
-                <tbody>
-                    @foreach (string item in informe)
-                    {
-                        <tr>
-                            <td>@item</td>
+                            <td><button type="button" class="btn btn-danger" @onclick="@(() => Borrar(item))">Eliminar</button></td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+         <div class="centrar-boton">
+                <button type="button" class="btn boton-calcular" data-toggle="modal" data-target="#exampleModalLong" @onclick="@(() => Calcular())">Calcular</button>
+           </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <div>
+            <div>
+                <h2 style="padding: 0.75rem;"><u>Resumen</u></h2>
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>Se gasto un total de: $@Math.Round(total, 2)</td> 
+                        </tr>
+                        <tr>
+                            <td>Cada participante pone: $@MontoParticipante()</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>  
+            <div>
+                <br />
+            </div>
+            <div>
+                <h2 style="padding: 0.75rem;"><u>Detalle</u></h2>
+                <table class="table">
+                    <tbody>                   
+                        @foreach (string item in informe)
+                        {
+                            <tr>
+                                <td>@item </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+    </div>
+      </div>
+      <div class="modal-footer; centrar-boton">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
 
 @code {
